@@ -25,6 +25,7 @@ public class DbServices {
 
         try {
             conn = DriverManager.getConnection(url, login, password);
+            System.out.println("connected to Database: \"" + dbName + "\"");
         } catch (SQLException e) {
             initDb(dbName, login, password);
         }
