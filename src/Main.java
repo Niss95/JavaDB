@@ -4,15 +4,13 @@ import java.sql.SQLException;
 
 public class Main {
 
-    static class db extends dbServices.DbServices {
-        //just to use it as alias: DbServices -> db
-    }
-
-
     public static void main(String args[]) throws SQLException {
         System.out.println("Program started...");
 
-        db.setUpDB("LootDB", "admin", "admin");
+        String[] defaultTables={"Weapons", "GeneralLoot", "FirstAid", "ComputerPath"};
+        DbServices db = new DbServices("LootDB", "admin", "admin", defaultTables);
+
+
 
 
         //app code in here

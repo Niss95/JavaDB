@@ -7,10 +7,31 @@ import java.sql.Statement;
 
 public class DbServices {
 
-    public static Connection conn;
+    private Connection conn;
+    private String dbName;
+    private String login;
+    private String password;
+    private String[] defaultTables;
 
-    public static void setUpDB(String dbName, String login, String password) {
+    public DbServices(String dbName, String login, String password) {
+        setDbName(dbName);
+        setLogin(login);
+        setPassword(password);
+        setUpDB();
+    }
 
+    public DbServices(String dbName, String login, String password, String[] defaultTables) {
+        setDbName(dbName);
+        setLogin(login);
+        setPassword(password);
+        setDefaultTables(defaultTables);
+        if (defaultTables.length <= 0) {
+            System.out.println("no default Tables detected!");
+        }
+        setUpDB();
+    }
+
+    private void setUpDB() {
         //set up local server and connect; by default creating the DB if not already exist!
         if (dbName.equals("") || dbName == null) {
             dbName = "testDB";
@@ -29,26 +50,29 @@ public class DbServices {
         } catch (SQLException e) {
             initDb(dbName, login, password);
         }
-
     }
 
     //extension for a fix Database
-    private static void initDb(String dbName, String login, String password) {
+    private void initDb(String dbName, String login, String password) {
         String url = "jdbc:h2:" + System.getProperty("user.dir") + "/DataBase/" + dbName;
         try {
             conn = DriverManager.getConnection(url, login, password);
-            createTable("Weapons");
-            createTable("GeneralLoot");
-            createTable("FirstAid");
-            createTable("ComputerPath");
 
+            if (defaultTables != null) {
+                for (String s : defaultTables) {
+                    createTable(s);
+                    //System.out.println("default Table \"" + s + "\" created.");
+                }
+            } else {
+                System.out.println("no default Tables set!");
+            }
         } catch (SQLException e) {
             e.printStackTrace();
         }
         System.out.println("Database initialisation completed!");
     }
 
-    public static void closeConnection(){
+    public void closeConnection() {
         try {
             conn.close();
         } catch (SQLException e) {
@@ -56,33 +80,28 @@ public class DbServices {
         }
     }
 
-    public static void createTable(String tableName) {
-
+    public void createTable(String tableName) {
         //create table with a default id "id"
         try {
-            if(existsTable(tableName) == false) {
-                String sql =    "create TABLE " + tableName +
-                                "(id INT NOT NULL )";
+            if (existsTable(tableName) == false) {
+                if (!tableName.equals("")) {
+                    String sql = "create TABLE " + tableName + "(id INT NOT NULL )";
 
-                Statement statement = conn.createStatement();
-                statement.execute(sql);
-                System.out.println("table \"" + tableName + "\" created successfully.");
+                    Statement statement = conn.createStatement();
+                    statement.execute(sql);
+                    System.out.println("table \"" + tableName + "\" created successfully.");
+                }else{System.out.println("ignoring empty Table!");}
             }
-
-
         } catch (SQLException e) {
             System.out.println("unable to create TABLE: \"" + tableName + "\"");
         }
-
     }
 
-    public static boolean existsTable(String tableName){
-
+    public boolean existsTable(String tableName) {
         try {
-
-            String sql =    "IF EXISTS " +
-                            "(SELECT * FROM INFORMATION_SCHEMA.TABLES " +
-                            "WHERE TABLE_NAME = '" + tableName + "') ";
+            String sql = "IF EXISTS " +
+                    "(SELECT * FROM INFORMATION_SCHEMA.TABLES " +
+                    "WHERE TABLE_NAME = '" + tableName + "') ";
 
             Statement statement = conn.createStatement();
             statement.execute(sql);
@@ -90,9 +109,35 @@ public class DbServices {
         } catch (SQLException e) {
             return false;
         }
-
-
         return true;
     }
 
+
+    private String getDbName() {
+        return dbName;
+    }
+
+    private void setDbName(String dbName) {
+        this.dbName = dbName;
+    }
+
+    private String getLogin() {
+        return login;
+    }
+
+    private void setLogin(String login) {
+        this.login = login;
+    }
+
+    private String getPassword() {
+        return password;
+    }
+
+    private void setPassword(String password) {
+        this.password = password;
+    }
+
+    private void setDefaultTables(String[] defaultTables) {
+        this.defaultTables = defaultTables;
+    }
 }
