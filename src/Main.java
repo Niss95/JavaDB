@@ -12,10 +12,14 @@ public class Main {
         //app code in here
 
 
-
+        db.printTableNames();
+        db.deleteTable(defaultTables[0]);
+        db.printTableNames();
+        //db.deleteTable("Weapons");
 
 
         //close current connection
+        //db.deleteDatabase();
         db.closeConnection();
         System.out.println("\nProgram ending...");
     }
