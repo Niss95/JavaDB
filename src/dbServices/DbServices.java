@@ -242,7 +242,7 @@ public class DbServices {
 
 
     /**
-     * TODO: finish
+     * TODO: finish: adding dynamic content
      * Prints the content of the given table to the console.
      * @param tableName
      */
@@ -309,7 +309,7 @@ public class DbServices {
     }
 
     /**
-     * TODO: finish
+     * TODO: finish: adding dynamic INSERT with error correction.
      * @param tableName
      */
     public void insertData(String tableName){
