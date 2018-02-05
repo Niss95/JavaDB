@@ -1,10 +1,7 @@
 package dbServices;
 
 import java.io.File;
-import java.sql.Connection;
-import java.sql.DriverManager;
-import java.sql.SQLException;
-import java.sql.Statement;
+import java.sql.*;
 
 public class DbServices {
 
@@ -20,10 +17,11 @@ public class DbServices {
     //---Constructors------------------------------------------------------------------------------
 
     /**
-     * Constructor for a Database without given default Tables.
-     * Best use if the Database already exists.
-     * @param dbName Name of the Database
-     * @param login Account- Name for the Connection
+     * Constructor for a database without given default tables.
+     * Best use if the database already exists.
+     *
+     * @param dbName   Name of the Database
+     * @param login    Account- Name for the Connection
      * @param password Login- Password for the Connection
      */
     public DbServices(String dbName, String login, String password) {
@@ -32,13 +30,15 @@ public class DbServices {
         setPassword(password);
         setUpDB();
     }
+
     /**
-     * Constructor for a Database without given default Tables.
-     * Best use if the Database doesn't exists already.
-     * @param dbName Name of the Database
-     * @param login Account- Name for the Connection
-     * @param password Login- Password for the Connection
-     * @param defaultTables Array of default Tables to create if the Database doesn't exist already
+     * Constructor for a database without given default tables.
+     * Best use if the database doesn't exists already.
+     *
+     * @param dbName        Name of the Database
+     * @param login         Account- Name for the Connection
+     * @param password      Login- Password for the connection
+     * @param defaultTables Array of default tables to create if the database doesn't exist already
      */
     public DbServices(String dbName, String login, String password, String[] defaultTables) {
         setDbName(dbName);
@@ -46,7 +46,7 @@ public class DbServices {
         setPassword(password);
         setDefaultTables(defaultTables);
         if (getDefaultTables().length <= 0) {
-            System.out.println("no default Tables detected!");
+            System.out.println("no default tables detected!");
         }
         setUpDB();
     }
@@ -55,9 +55,9 @@ public class DbServices {
 
     /**
      * Setting up the Database- Connection.
-     *
+     * <p>
      * Searching for a Database with the given name; don't compares the content!
-     * If the Database doesn't exists it will be created; empty if no default tables are passed!
+     * If the database doesn't exists it will be created; empty if no default tables are passed!
      */
     private void setUpDB() {
         //set up local server and connect; by default creating the DB if not already exist!
@@ -70,12 +70,13 @@ public class DbServices {
         if (getPassword().equals("") || getPassword() == null) {
             setPassword("password");
         }
-        String url = "jdbc:h2:" + System.getProperty("user.dir") + "/DataBase/" + getDbName() + ";IFEXISTS=TRUE";
+
 
         try {
-            setConn(DriverManager.getConnection(url, getLogin(), getPassword()));
+            String url = "jdbc:derby:" + System.getProperty("user.dir") + "/DataBases/" + getDbName();
+            setConn(DriverManager.getConnection(url));//, getLogin(), getPassword()));    //TODO: add account support later
             System.out.println("Database excise...");
-            System.out.println("connected to Database: \"" + getDbName() + "\"");
+            System.out.println("connected to database: \"" + getDbName() + "\"\n");
         } catch (SQLException e) {
             initDb();
         }
@@ -85,22 +86,37 @@ public class DbServices {
      * Initialises a new Database with default Tables if passed.
      */
     private void initDb() {
-        String url = "jdbc:h2:" + System.getProperty("user.dir") + "/DataBase/" + getDbName();
+
         try {
-            setConn(DriverManager.getConnection(url, getLogin(), getPassword()));
+            String url = "jdbc:derby:" + System.getProperty("user.dir") + "/DataBases/" + getDbName() + ";create=true";
+            setConn(DriverManager.getConnection(url));//, getLogin(), getPassword()));    //TODO: add account support later
 
             if (getDefaultTables() != null) {
-                System.out.println("creating new Tables:");
+                System.out.println("creating new tables:");
                 for (String s : getDefaultTables()) {
                     createTable(s);
                 }
             } else {
-                System.out.println("no default Tables set!");
+                System.out.println("no default tables set!");
             }
         } catch (SQLException e) {
             e.printStackTrace();
         }
         System.out.println("\nDatabase initialisation completed!\n");
+    }
+
+    /**
+     * Deleting a file and if file is a directory; deleting its sub-directory's and sub-files.
+     *
+     * @param file File to delete.
+     */
+    private void delete(File file) {
+        if (file.isDirectory()) {
+            for (File c : file.listFiles())
+                delete(c);
+        }
+        if (!file.delete())
+            System.out.println("Failed to delete file: " + file);
     }
 
     //---Non Public Setter and Getter--------------------------------------------------------------
@@ -113,11 +129,11 @@ public class DbServices {
         this.dbName = dbName;
     }
 
-    public Connection getConn() {
+    private Connection getConn() {
         return this.conn;
     }
 
-    public void setConn(Connection conn) {
+    private void setConn(Connection conn) {
         this.conn = conn;
     }
 
@@ -137,18 +153,18 @@ public class DbServices {
         this.password = password;
     }
 
-    public String[] getDefaultTables() {
+    private String[] getDefaultTables() {
         return this.defaultTables;
     }
 
-    public void setDefaultTables(String[] defaultTables) {
+    private void setDefaultTables(String[] defaultTables) {
         this.defaultTables = defaultTables;
     }
 
     //---Public Methods----------------------------------------------------------------------------
 
     /**
-     * Closes the current Connection to the belonged Database.
+     * Closes the current connection to the belonged database.
      */
     public void closeConnection() {
         try {
@@ -160,68 +176,171 @@ public class DbServices {
     }
 
     /**
-     * Creating a new Table with a fix id: "id" if not already exists.
-     * @param tableName Name fpr the new Table
+     * Creating a new table (with a fix primary-key: "id") if not already exists.
+     *
+     * @param tableName Name for the new table
      */
     public void createTable(String tableName) {
         //create table with a default id "id"
         try {
-            if (existsTable(tableName) == false) {
+            if (!existsTable(tableName)) {
                 if (!tableName.equals("")) {
-                    String sql = "create TABLE " + tableName + "(id INT NOT NULL )";
 
                     Statement statement = getConn().createStatement();
-                    statement.execute(sql);
+                    statement.executeUpdate("CREATE TABLE " + tableName + " (ID INT PRIMARY KEY, NAME VARCHAR (50))");
                     System.out.println("table \"" + tableName + "\" created successfully.");
+
                 } else {
-                    System.out.println("ignoring empty Table!");
+                    System.out.println("ignoring empty table!");
                 }
             }
         } catch (SQLException e) {
-            System.out.println("unable to create TABLE: \"" + tableName + "\"");
+            System.out.println("unable to create table: \"" + tableName + "\"");
         }
     }
 
     /**
+     * Deletes the hole table if exists.
+     * @param tableName Name of the Table to delete.
+     */
+    public void deleteTable(String tableName) {
+
+        try {
+            if (existsTable(tableName)) {
+                String sql = "DROP TABLE " + tableName;
+                Statement statement = getConn().createStatement();
+                statement.executeUpdate(sql);
+                System.out.println("deleted table:\"" + tableName + "\" successfully!");
+            } else {
+                System.out.println("Table: \"" + tableName + "\" not found!");
+            }
+        } catch (SQLException e) {
+            System.out.println("\nunable to delete table: \"" + tableName + "\"!\n");
+            e.printStackTrace();
+        }
+
+    }
+
+    /**
+     * Printing the names of all current tables in the database.
+     */
+    public void printTableNames() {
+
+        try {
+            DatabaseMetaData meta = getConn().getMetaData();
+            ResultSet rs = meta.getTables(null, null, null, new String[]{"TABLE"});
+            System.out.println("\nList of tables: ");
+            while (rs.next()) {
+                System.out.println(rs.getString("TABLE_NAME"));
+            }
+            System.out.println("\n");
+            rs.close();
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
+
+
+    /**
+     * TODO: finish
+     * Prints the content of the given table to the console.
+     * @param tableName
+     */
+    public void printTable(String tableName) {
+
+        try {
+            if (existsTable(tableName)) {
+                Statement stmt = getConn().createStatement();
+                ResultSet rs = stmt.executeQuery("SELECT * FROM " + tableName);
+                System.out.println("Content of table \"" + tableName + "\":");
+
+                while (rs.next()) {
+                    int id = rs.getInt(1);
+                    String name = rs.getString(2);
+                    System.out.println(id+"\t"+name);
+                }
+                System.out.println("");
+            } else {
+                System.out.println("unable to print the content of table: \"" + tableName + "\"\n");
+            }
+        } catch (Exception e) {
+
+        }
+    }
+
+    /**
+     * Checks if a table exists in the database.
      *
-     * @param tableName Name of the Table to check.
-     * @return false if Table don't exists in the Database; true if it exists.
+     * @param tableName Name of the table to check.
+     * @return false if table don't exists in the Database; true if it exists.
      */
     public boolean existsTable(String tableName) {
         try {
-            String sql = "IF EXISTS " +
-                    "(SELECT * FROM INFORMATION_SCHEMA.TABLES " +
-                    "WHERE TABLE_NAME = '" + tableName + "') ";
-
-            Statement statement = getConn().createStatement();
-            statement.execute(sql);
-
+            DatabaseMetaData metadata = getConn().getMetaData();
+            ResultSet rs = metadata.getTables(null, null, tableName.toUpperCase(), new String[]{"TABLE"});
+            if (rs.next()) {
+                if (rs.getString("TABLE_NAME").equals(tableName.toUpperCase())) {
+                    return true;
+                }
+            }
         } catch (SQLException e) {
-            return false;
+            e.printStackTrace();
         }
-        return true;
+        return false;
     }
 
     /**
-     * Deletes all Database- files in the directory.
+     * Deletes the hole database and everything belong to it.
      * Use with caution! No recovery!!!
      */
     public void deleteDatabase() {
         try {
+            System.out.println("deleting database \"" + getDbName() + "\"...");
             getConn().close();
 
-            File target1 = new File(System.getProperty("user.dir") + "/DataBase/" + getDbName() + ".mv.db");
-            File target2 = new File(System.getProperty("user.dir") + "/DataBase/" + getDbName() + ".trace.db");
+            File target = new File(System.getProperty("user.dir") + "/DataBases/" + getDbName());
+            delete(target);
+            System.out.println("Database \"" + getDbName() + "\" successfully deleted!\n");
 
-            if (target1.delete() && target2.delete()) {
-                System.out.println("\nDatabase \"" + getDbName() + "\" successfully deleted!\n");
-            }
         } catch (SQLException e) {
-            e.printStackTrace();
-        } catch (SecurityException e) {
             e.printStackTrace();
         }
 
     }
 
+    /**
+     * TODO: finish
+     * @param tableName
+     */
+    public void insertData(String tableName){
+
+        try {
+            if (existsTable(tableName)) {
+                String sql = "INSERT INTO " + tableName + "(ID, NAME) VALUES (78, 'ErsteWaffe')";
+                Statement statement = getConn().createStatement();
+                statement.execute(sql);
+                System.out.println("edited table:\"" + tableName + "\".");
+            } else {
+                System.out.println("Table: \"" + tableName + "\" not found!");
+            }
+        } catch (SQLException e) {
+            System.out.println("\nunable to edit table: \"" + tableName + "\"!\n");
+        }
+    }
+
+    /**
+     * To perform a basic SQL statement without error correction!
+     * @param sql A SQL statement in string format.
+     */
+    public void sql(String sql){
+
+        try {
+            Statement statement = getConn().createStatement();
+            statement.execute(sql);
+            System.out.println("SQL statement performed.");
+        } catch (SQLException e) {
+            System.out.println("unable to perform sql statement!");
+        }
+    }
 }
+
