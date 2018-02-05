@@ -1,5 +1,6 @@
 package dbServices;
 
+import java.io.File;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
@@ -7,19 +8,38 @@ import java.sql.Statement;
 
 public class DbServices {
 
+    //TODO: account bezogene sicherungen integrieren; siehe "deleteDatabase()"
+
     private Connection conn;
     private String dbName;
     private String login;
     private String password;
     private String[] defaultTables;
 
+
+    //---Constructors------------------------------------------------------------------------------
+
+    /**
+     * Constructor for a Database without given default Tables.
+     * Best use if the Database already exists.
+     * @param dbName Name of the Database
+     * @param login Account- Name for the Connection
+     * @param password Login- Password for the Connection
+     */
     public DbServices(String dbName, String login, String password) {
         setDbName(dbName);
         setLogin(login);
         setPassword(password);
         setUpDB();
     }
-
+    /**
+     * Constructor for a Database without given default Tables.
+     * Best use if the Database doesn't exists already.
+     * @param dbName Name of the Database
+     * @param login Account- Name for the Connection
+     * @param password Login- Password for the Connection
+     * @param defaultTables Array of default Tables to create if the Database doesn't exist already
+     */
     public DbServices(String dbName, String login, String password, String[] defaultTables) {
         setDbName(dbName);
         setLogin(login);
@@ -31,6 +51,14 @@ public class DbServices {
         setUpDB();
     }
 
+    //---Private Methods----------------------------------------------------------------------------
+
+    /**
+     * Setting up the Database- Connection.
+     *
+     * Searching for a Database with the given name; don't compares the content!
+     * If the Database doesn't exists it will be created; empty if no default tables are passed!
+     */
     private void setUpDB() {
         //set up local server and connect; by default creating the DB if not already exist!
         if (getDbName().equals("") || getDbName() == null) {
@@ -53,7 +81,9 @@ public class DbServices {
         }
     }
 
-    //extension for a fix Database
+    /**
+     * Initialises a new Database with default Tables if passed.
+     */
     private void initDb() {
         String url = "jdbc:h2:" + System.getProperty("user.dir") + "/DataBase/" + getDbName();
         try {
@@ -73,49 +103,7 @@ public class DbServices {
         System.out.println("\nDatabase initialisation completed!\n");
     }
 
-    public void closeConnection() {
-        try {
-            getConn().close();
-            System.out.println("closed connection to \"" + getDbName() + "\".");
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
-    }
-
-    public void createTable(String tableName) {
-        //create table with a default id "id"
-        try {
-            if (existsTable(tableName) == false) {
-                if (!tableName.equals("")) {
-                    String sql = "create TABLE " + tableName + "(id INT NOT NULL )";
-
-                    Statement statement = getConn().createStatement();
-                    statement.execute(sql);
-                    System.out.println("table \"" + tableName + "\" created successfully.");
-                } else {
-                    System.out.println("ignoring empty Table!");
-                }
-            }
-        } catch (SQLException e) {
-            System.out.println("unable to create TABLE: \"" + tableName + "\"");
-        }
-    }
-
-    public boolean existsTable(String tableName) {
-        try {
-            String sql = "IF EXISTS " +
-                    "(SELECT * FROM INFORMATION_SCHEMA.TABLES " +
-                    "WHERE TABLE_NAME = '" + tableName + "') ";
-
-            Statement statement = getConn().createStatement();
-            statement.execute(sql);
-
-        } catch (SQLException e) {
-            return false;
-        }
-        return true;
-    }
-
+    //---Non Public Setter and Getter--------------------------------------------------------------
 
     private String getDbName() {
         return this.dbName;
@@ -156,4 +144,84 @@ public class DbServices {
     public void setDefaultTables(String[] defaultTables) {
         this.defaultTables = defaultTables;
     }
+
+    //---Public Methods----------------------------------------------------------------------------
+
+    /**
+     * Closes the current Connection to the belonged Database.
+     */
+    public void closeConnection() {
+        try {
+            getConn().close();
+            System.out.println("closed connection to \"" + getDbName() + "\".");
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
+
+    /**
+     * Creating a new Table with a fix id: "id" if not already exists.
+     * @param tableName Name fpr the new Table
+     */
+    public void createTable(String tableName) {
+        //create table with a default id "id"
+        try {
+            if (existsTable(tableName) == false) {
+                if (!tableName.equals("")) {
+                    String sql = "create TABLE " + tableName + "(id INT NOT NULL )";
+
+                    Statement statement = getConn().createStatement();
+                    statement.execute(sql);
+                    System.out.println("table \"" + tableName + "\" created successfully.");
+                } else {
+                    System.out.println("ignoring empty Table!");
+                }
+            }
+        } catch (SQLException e) {
+            System.out.println("unable to create TABLE: \"" + tableName + "\"");
+        }
+    }
+
+    /**
+     *
+     * @param tableName Name of the Table to check.
+     * @return false if Table don't exists in the Database; true if it exists.
+     */
+    public boolean existsTable(String tableName) {
+        try {
+            String sql = "IF EXISTS " +
+                    "(SELECT * FROM INFORMATION_SCHEMA.TABLES " +
+                    "WHERE TABLE_NAME = '" + tableName + "') ";
+
+            Statement statement = getConn().createStatement();
+            statement.execute(sql);
+
+        } catch (SQLException e) {
+            return false;
+        }
+        return true;
+    }
+
+    /**
+     * Deletes all Database- files in the directory.
+     * Use with caution! No recovery!!!
+     */
+    public void deleteDatabase() {
+        try {
+            getConn().close();
+
+            File target1 = new File(System.getProperty("user.dir") + "/DataBase/" + getDbName() + ".mv.db");
+            File target2 = new File(System.getProperty("user.dir") + "/DataBase/" + getDbName() + ".trace.db");
+
+            if (target1.delete() && target2.delete()) {
+                System.out.println("\nDatabase \"" + getDbName() + "\" successfully deleted!\n");
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        } catch (SecurityException e) {
+            e.printStackTrace();
+        }
+
+    }
+
 }
