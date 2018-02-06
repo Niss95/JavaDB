@@ -201,6 +201,7 @@ public class DbServices {
 
     /**
      * Deletes the hole table if exists.
+     *
      * @param tableName Name of the Table to delete.
      */
     public void deleteTable(String tableName) {
@@ -244,7 +245,8 @@ public class DbServices {
     /**
      * TODO: finish: adding dynamic content
      * Prints the content of the given table to the console.
-     * @param tableName
+     *
+     * @param tableName The name of the table to print.
      */
     public void printTable(String tableName) {
 
@@ -252,19 +254,53 @@ public class DbServices {
             if (existsTable(tableName)) {
                 Statement stmt = getConn().createStatement();
                 ResultSet rs = stmt.executeQuery("SELECT * FROM " + tableName);
+                ResultSetMetaData rsmd = rs.getMetaData();
                 System.out.println("Content of table \"" + tableName + "\":");
 
                 while (rs.next()) {
-                    int id = rs.getInt(1);
-                    String name = rs.getString(2);
-                    System.out.println(id+"\t"+name);
+                    for (int i = 1; i <= rsmd.getColumnCount(); i++) {
+                        System.out.print(rs.getString(i) + "\t");
+                    }
+                    System.out.println("");
                 }
                 System.out.println("");
             } else {
                 System.out.println("unable to print the content of table: \"" + tableName + "\"\n");
             }
         } catch (Exception e) {
+            System.out.println("unable to print the content of table: \"" + tableName + "\"\n");
+        }
+    }
 
+    /**
+     * Prints the content of the given table to the console with a limit of rows to print.
+     *
+     * @param tableName The name of the table to print.
+     * @param limit The limit of rows to print.
+     */
+    public void printTable(String tableName, int limit) {
+
+        try {
+            if (existsTable(tableName)) {
+                Statement stmt = getConn().createStatement();
+                ResultSet rs = stmt.executeQuery("SELECT * FROM " + tableName);
+                ResultSetMetaData rsmd = rs.getMetaData();
+                System.out.println("Content of table \"" + tableName + "\":");
+
+                int rowCounter = 1;
+                while (rs.next() && rowCounter <= limit) {
+                    for (int i = 1; i <= rsmd.getColumnCount(); i++) {
+                        System.out.print(rs.getString(i) + "\t");
+                    }
+                    System.out.println("");
+                    rowCounter++;
+                }
+                System.out.println("");
+            } else {
+                System.out.println("unable to print the content of table: \"" + tableName + "\"\n");
+            }
+        } catch (Exception e) {
+            System.out.println("unable to print the content of table: \"" + tableName + "\"\n");
         }
     }
 
@@ -310,13 +346,14 @@ public class DbServices {
 
     /**
      * TODO: finish: adding dynamic INSERT with error correction.
+     *
      * @param tableName
      */
-    public void insertData(String tableName){
+    public void insertData(String tableName) {
 
         try {
             if (existsTable(tableName)) {
-                String sql = "INSERT INTO " + tableName + "(ID, NAME) VALUES (78, 'ErsteWaffe')";
+                String sql = "INSERT INTO " + tableName + "(ID, NAME) VALUES (1, 'cccc')";
                 Statement statement = getConn().createStatement();
                 statement.execute(sql);
                 System.out.println("edited table:\"" + tableName + "\".");
@@ -330,9 +367,11 @@ public class DbServices {
 
     /**
      * To perform a basic SQL statement without error correction!
+     * Can't show or print results.
+     *
      * @param sql A SQL statement in string format.
      */
-    public void sql(String sql){
+    public void sql(String sql) {
 
         try {
             Statement statement = getConn().createStatement();
