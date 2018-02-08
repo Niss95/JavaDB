@@ -1,4 +1,4 @@
-# [SEJDB] Simple embedded Java DataBase
+# [SEJDB] Simple Embedded Java DataBase
 JavaDB framework for embedded databases. <br>
 Low complexity easy to use. Comming with error correction by default. <br>
 
