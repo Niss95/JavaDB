@@ -1,4 +1,4 @@
-package dbServices;
+package SEJDB;
 
 import java.io.File;
 import java.sql.*;
@@ -6,7 +6,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 
-public class DbServices {
+public class DBServices {
     
     //TODO: account bezogene sicherungen integrieren; siehe "deleteDatabase()"
     //TODO: Fehlerabfangen: Datenbank wird zwischendrin gelöscht!
@@ -28,7 +28,7 @@ public class DbServices {
      * @param login    Account- Name for the Connection
      * @param password Login- Password for the Connection
      */
-    public DbServices(String dbName, String login, String password) {
+    public DBServices(String dbName, String login, String password) {
         setDbName(dbName);
         setLogin(login);
         setPassword(password);
@@ -44,7 +44,7 @@ public class DbServices {
      * @param password      Login- Password for the connection
      * @param defaultTables Array of default tables to create if the database doesn't exist already
      */
-    public DbServices(String dbName, String login, String password, String[] defaultTables) {
+    public DBServices(String dbName, String login, String password, String[] defaultTables) {
         setDbName(dbName);
         setLogin(login);
         setPassword(password);
